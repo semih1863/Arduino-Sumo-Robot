@@ -1,2 +1,2 @@
 # Arduino-Sumo-Robot
-Arduino Sumo Robot Code
+Detaylı bilgi için sitemizi ziyaret edin https://teknolojiringi.netlify.app/
