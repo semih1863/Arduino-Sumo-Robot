@@ -1,8 +1,8 @@
 // Pin tanımlamaları
 const int motor1Pin1 = 3; // Motor 1'in ileri pin 1'i
-const int motor1Pin2 = 2; // Motor 1'in ileri pin 2'si
+const int motor1Pin2 = 2; // Motor 1'in geri pin 2'si
 const int motor2Pin1 = 4; // Motor 2'nin ileri pin 1'i
-const int motor2Pin2 = 5; // Motor 2'nin ileri pin 2'si
+const int motor2Pin2 = 5; // Motor 2'nin geri pin 2'si
 
 // Pin tanımlamaları
 const int sensorPin1 = A4;    // Sol çizgi sensörü pin
@@ -11,8 +11,7 @@ const int onTrigPin = A1;     // Ön ultrasonik sensör echo pin
 const int solEchoPin = A2;    // Sağ ultrasonik sensör trig pin
 const int solTrigPin = A3;    // Sağ ultrasonik sensör echo pin
 
-// Siyah ve beyaz arasındaki eşik değerler
-const int beyazEsik = 600; // Beyaz olarak kabul edilen eşik değer
+const int esikDeger = 512;    // Siyah ve beyaz arasındaki eşik değer
 
 void setup() {
   // Pin modlarını ayarlama
@@ -32,8 +31,9 @@ void setup() {
 
 void loop() {
   // Çizgi sensörlerini oku
-  int sensor1Durum = digitalRead(sensorPin1); // Sol çizgi sensörünün durumunu oku
-  
+  int sensor1Deger = analogRead(sensorPin1); // Sol çizgi sensörünün analog değerini oku
+  int sensor1Durum = (sensor1Deger > esikDeger) ? 1 : 0; // Eşik değere göre durumu belirle
+
   // Ultrasonik sensörlerden mesafeleri ölç
   int onMesafe = mesafeOlc(onTrigPin, onEchoPin); // Ön ultrasonik sensörden mesafe ölç
   int solMesafe = mesafeOlc(solTrigPin, solEchoPin); // Sağ ultrasonik sensörden mesafe ölç
@@ -43,7 +43,9 @@ void loop() {
   bool solEngelVar = (solMesafe < 10); // Sağ sensör için engel kontrolü
   
   // Sonuçları seri monitöre yazdır
-  Serial.print("Sağ Çizgi Sensörü Durumu: ");
+  Serial.print("Sol Çizgi Sensörü Değeri: ");
+  Serial.print(sensor1Deger);
+  Serial.print(", Durum: ");
   Serial.print(sensor1Durum);
   Serial.print(", Ön Engel: ");
   Serial.print(onEngelVar);
@@ -54,20 +56,25 @@ void loop() {
   delay(100); // 0.1 saniye bekle
 
   // Robotun hareketini belirle
+  if (sensor1Durum == 1) {
+    // Öncelik sıralaması:
     if (onEngelVar && !solEngelVar) {
-    ileri();
-  } else if (!onEngelVar && solEngelVar) {
-    sol();
-  }else if(!onEngelVar && !solEngelVar){
+      ileri();
+    } else if (!onEngelVar && solEngelVar) {
+      sol();
+    } else if (!onEngelVar && !solEngelVar) {
+      sag();
+      delay(200);
+      dur();
+      delay(500);
+    }
+  } else {
+    geri();
+    delay(500);
     sag();
     delay(500);
-    dur();
-    delay(500);
   }
-
-  
 }
-
 
 // Mesafe ölçümü fonksiyonu
 int mesafeOlc(int trigPin, int echoPin) {
@@ -83,6 +90,7 @@ int mesafeOlc(int trigPin, int echoPin) {
   int mesafe = sure * 0.0343 / 2;
   return mesafe;
 }
+
 // Motor ileri fonksiyonu
 void ileri() {
   digitalWrite(motor1Pin1, HIGH);
@@ -99,13 +107,13 @@ void geri() {
   digitalWrite(motor2Pin2, HIGH);
 }
 
-// Motor sağa dönme fonksiyonu
+// Motor sola dönme fonksiyonu
 void sol() {
   digitalWrite(motor1Pin1, HIGH);
   digitalWrite(motor1Pin2, LOW);
   digitalWrite(motor2Pin1, LOW);
   digitalWrite(motor2Pin2, HIGH);
-  delay(300); //  milisaniye boyunca sola dön
+  delay(300); // milisaniye boyunca sola dön
   dur(); // Durdur
 }
 
@@ -115,7 +123,7 @@ void sag() {
   digitalWrite(motor1Pin2, HIGH);
   digitalWrite(motor2Pin1, HIGH);
   digitalWrite(motor2Pin2, LOW);
-  delay(500); // 500 milisaniye boyunca sağa dön
+  delay(300); // milisaniye boyunca sağa dön
   dur(); // Durdur
 }
 
